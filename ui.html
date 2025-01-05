@@ -248,13 +248,14 @@
       }
 
       function copyHTML(id) {
+        const server = "https://localhost:8080/track/"
         const htmlContent = `<!DOCTYPE html>
             <html lang="en">
             <head>
                 <title></title>
             </head>
             <body>
-                <img src="https://s2jf458j-8080.usw3.devtunnels.ms/track/${id}" width="1" height="1" alt="" />
+                <img src="${server}${id}" width="1" height="1" alt="" />
             </body>
             </html>
         `;
