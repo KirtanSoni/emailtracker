@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Email Pixel Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <style>
+      :root {
+        --primary-color: #2563eb;
+        --error-color: #dc2626;
+        --success-color: #16a34a;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        line-height: 1.6;
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: #f8fafc;
+      }
+
+      .container {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        color: #1e293b;
+        margin-bottom: 2rem;
+      }
+
+      .section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+      }
+
+      .section h2 {
+        color: #334155;
+        margin-bottom: 1rem;
+      }
+
+      .form-group {
+        margin-bottom: 1rem;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #475569;
+        font-weight: 500;
+      }
+
+      input[type="text"] {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        font-size: 1rem;
+      }
+
+      button {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.2s;
+      }
+
+      button:hover {
+        background-color: #1d4ed8;
+      }
+
+      .result {
+        margin-top: 1rem;
+        padding: 1rem;
+        border-radius: 4px;
+      }
+
+      .success {
+        background-color: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        color: var(--success-color);
+      }
+
+      .error {
+        background-color: #fef2f2;
+        border: 1px solid #fecaca;
+        color: var(--error-color);
+      }
+
+      .tracking-url {
+        margin-top: 1rem;
+        padding: 1rem;
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        word-break: break-all;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+      }
+
+      th,
+      td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      th {
+        background-color: #f8fafc;
+        color: #475569;
+        font-weight: 600;
+      }
+
+      tr:hover {
+        background-color: #f8fafc;
+      }
+
+      .logs-container {
+        margin-top: 1rem;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .tabs {
+        display: flex;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .tab {
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        border: none;
+        background: none;
+        color: #64748b;
+        font-weight: 500;
+      }
+
+      .tab.active {
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--primary-color);
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      .copy-button {
+        padding: 10px 20px;
+        background-color: #3490dc;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      .copy-button:hover {
+        background-color: #2779bd;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Email Pixel Tracker</h1>
+
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('create')">
+          Create Tracker
+        </button>
+        <button class="tab" onclick="showTab('view')">View Logs</button>
+      </div>
+
+      <div id="createTab" class="tab-content active">
+        <div class="section">
+          <h2>Create New Tracking Pixel</h2>
+          <div class="form-group">
+            <label for="emailId">Email ID</label>
+            <input
+              type="text"
+              id="emailId"
+              placeholder="Enter a unique identifier for your email"
+            />
+          </div>
+          <button onclick="createTracker()">Create Tracker</button>
+          <div id="createResult"></div>
+        </div>
+      </div>
+
+      <div id="viewTab" class="tab-content">
+        <div class="section">
+          <h2>View Tracking Logs</h2>
+          <div class="form-group">
+            <label for="logEmailId">Email ID</label>
+            <input
+              type="text"
+              id="logEmailId"
+              placeholder="Enter the email ID to view logs"
+            />
+          </div>
+          <button onclick="fetchLogs()">View Logs</button>
+          <div id="logsResult"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function showTab(tabName) {
+        // Hide all tab contents
+        document.querySelectorAll(".tab-content").forEach((content) => {
+          content.classList.remove("active");
+        });
+
+        // Deactivate all tabs
+        document.querySelectorAll(".tab").forEach((tab) => {
+          tab.classList.remove("active");
+        });
+
+        // Show selected tab content and activate tab
+        document.getElementById(tabName + "Tab").classList.add("active");
+        document
+          .querySelector(`[onclick="showTab('${tabName}')"]`)
+          .classList.add("active");
+      }
+
+      function copyHTML(id) {
+        const htmlContent = `<!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <title></title>
+            </head>
+            <body>
+                <img src="https://s2jf458j-8080.usw3.devtunnels.ms/track/${id}" width="1" height="1" alt="" />
+            </body>
+            </html>
+        `;
+
+        // Create container for the HTML
+        const container = document.createElement("div");
+        container.innerHTML = htmlContent;
+
+        // Hide element but keep it functional
+        container.style.position = "fixed";
+        container.style.pointerEvents = "none";
+        container.style.opacity = "0";
+
+        // Get all active stylesheets
+        const activeSheets = Array.from(document.styleSheets).filter(
+          (sheet) => !sheet.disabled
+        );
+
+        // Mount the container to the DOM
+        document.body.appendChild(container);
+
+        // Copy to clipboard
+        window.getSelection().removeAllRanges();
+
+        const range = document.createRange();
+        range.selectNode(container);
+        window.getSelection().addRange(range);
+
+        // First copy with styles
+        document.execCommand("copy");
+
+        // Second copy without styles
+        activeSheets.forEach((sheet) => (sheet.disabled = true));
+        document.execCommand("copy");
+        activeSheets.forEach((sheet) => (sheet.disabled = false));
+
+        // Cleanup
+        document.body.removeChild(container);
+        window.getSelection().removeAllRanges();
+      }
+
+      async function createTracker() {
+        const emailId = document.getElementById("emailId").value.trim();
+        const resultDiv = document.getElementById("createResult");
+
+        if (!emailId) {
+          showResult(resultDiv, "Please enter an Email ID", false);
+          return;
+        }
+
+        try {
+          const response = await fetch(`/create/${emailId}`, {
+            method: "POST",
+          });
+
+          const data = await response.text();
+
+          if (response.ok) {
+            const trackingUrl = `${window.location.origin}/track/${emailId}`;
+            showResult(resultDiv, "Tracking pixel created successfully!", true);
+            resultDiv.innerHTML += `
+                        <div class="tracking-url">
+                            <strong>Tracking URL:</strong><br>
+                            ${trackingUrl}<br><br>
+                            <strong>HTML Tag:</strong><br>
+                            &lt;img src="${trackingUrl}" width="1" height="1" alt="" /&gt;
+                        </div>
+                        <button class="copy-button" onclick="copyHTML('${emailId}')">Copy HTML to Clipboard</button>
+                    `;
+          } else {
+            const error = JSON.parse(data);
+            showResult(resultDiv, `Error: ${error.error}`, false);
+          }
+        } catch (error) {
+          showResult(resultDiv, `Error: ${error.message}`, false);
+        }
+      }
+
+      async function fetchLogs() {
+        const emailId = document.getElementById("logEmailId").value.trim();
+        const resultDiv = document.getElementById("logsResult");
+
+        if (!emailId) {
+          showResult(resultDiv, "Please enter an Email ID", false);
+          return;
+        }
+
+        try {
+          const response = await fetch(`/logs/${emailId}`);
+          const data = await response.json();
+
+          if (response.ok) {
+            if (data.length === 0) {
+              showResult(resultDiv, "No logs found for this email ID", false);
+              return;
+            }
+
+            resultDiv.innerHTML = `
+                        <div class="logs-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>IP Address</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data
+                                      .map(
+                                        (log) => `
+                                        <tr>
+                                            <td>${moment(log.TimeStamp).format(
+                                              "YYYY-MM-DD HH:mm:ss"
+                                            )}</td>
+                                            <td>${log.IP}</td>
+                                        </tr>
+                                    `
+                                      )
+                                      .join("")}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+          } else {
+            showResult(resultDiv, `Error: ${data.error}`, false);
+          }
+        } catch (error) {
+          showResult(resultDiv, `Error: ${error.message}`, false);
+        }
+      }
+
+      function showResult(element, message, isSuccess) {
+        element.innerHTML = `
+                <div class="result ${isSuccess ? "success" : "error"}">
+                    ${message}
+                </div>
+            `;
+      }
+    </script>
+  </body>
+</html>
